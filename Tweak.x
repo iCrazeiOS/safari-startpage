@@ -5,6 +5,11 @@
 -(void)evaluateJavaScript:(NSString *)javaScriptString completionHandler:(void (^)(id, NSError *))completionHandler;
 @end
 
+// Remove ads & related searches
+#define JAVASCRIPT_STRINGS	"document.querySelector('span.attribution-text')?.textContent === 'Related searches' && document.querySelector('span.attribution-text')?.parentElement?.parentElement?.remove();" \
+							"Array.from(document.querySelectorAll('div.gcsa-container')).forEach(e => e.remove());" \
+							"Array.from(document.querySelectorAll('section.a-bg')).forEach(e => e.remove());"
+
 %hook WBSSearchProvider
 -(id)initWithDictionary:(id)dictionary usingContext:(id)context {
 	if ([dictionary[@"ParsecSearchIdentifier"] isEqualToString:@"google_search"]) {
@@ -48,12 +53,13 @@
 	return %orig(dictionary, context);
 }
 %end
+
 %hook WKWebView
 -(void)_didFinishNavigation:(id *)arg1 {
 	%orig;
 
 	if ([self.URL.absoluteString containsString:@"startpage.com/"]) {
-		[self evaluateJavaScript:@"document.querySelector('span.attribution-text')?.textContent.trim() === 'Related searches' && document.querySelector('span.attribution-text')?.parentElement?.parentElement?.remove();" completionHandler:nil];
+		[self evaluateJavaScript:[NSString stringWithUTF8String:JAVASCRIPT_STRINGS] completionHandler:nil];
 	}
 }
 %end
